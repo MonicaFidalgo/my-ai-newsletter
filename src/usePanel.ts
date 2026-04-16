@@ -51,6 +51,24 @@ export function usePanel(
   const [sessions, setSessions] = useState<Session[]>(() => loadSessions(storageKey))
   const [viewingSession, setViewingSession] = useState<Session | null>(null)
 
+  // Carregar sessões do KV ao montar (merge com localStorage)
+  useEffect(() => {
+    fetch(`/api/sessions/${storageKey}`)
+      .then((r) => r.json())
+      .then((kvSessions: Session[]) => {
+        setSessions((prev) => {
+          // Merge: KV sessions first, then local — dedup by id
+          const seen = new Set<string>()
+          return [...kvSessions, ...prev].filter((s) => {
+            if (seen.has(s.id)) return false
+            seen.add(s.id)
+            return true
+          }).slice(0, 20)
+        })
+      })
+      .catch(() => {}) // falha silenciosa em dev (sem KV)
+  }, [storageKey])
+
   // Auto-translate to EN when language switches and EN cache is empty
   useEffect(() => {
     if (language !== 'en' || !resultPT || resultEN !== null || isTranslatingRef.current) return
@@ -85,9 +103,15 @@ export function usePanel(
       setResultEN(null) // clear EN cache — will re-translate on demand
       setLastUpdated(ts)
       patchStorage(storageKey, { resultPT: result, resultEN: null, lastUpdated: ts })
-      // Save to history
+      // Save to history (localStorage)
       const updated = pushSession(storageKey, result, 'pt')
       setSessions(updated)
+      // Persistir no KV (best-effort)
+      fetch(`/api/sessions/${storageKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated[0]),
+      }).catch(() => {})
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
     } finally {

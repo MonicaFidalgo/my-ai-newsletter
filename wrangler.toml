@@ -1,0 +1,10 @@
+name = "backstage-cron"
+main = "worker/index.ts"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "SESSIONS_KV"
+id = "SUBSTITUI_COM_KV_ID"
+
+[triggers]
+crons = ["0 8 * * *"]
