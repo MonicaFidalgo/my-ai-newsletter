@@ -38,6 +38,10 @@ export async function fetchLovable(): Promise<string> {
   return fetchPage('/proxy/lovable/changelog')
 }
 
+export async function fetchClaudeCode(): Promise<string> {
+  return fetchPage('/proxy/claudecode/docs/en/whats-new')
+}
+
 export async function fetchClaude(): Promise<string> {
   const [news, docs] = await Promise.all([
     fetchPage('/proxy/anthropic-news/news'),
@@ -67,7 +71,7 @@ Sem marketing fluff. Máximo 4 updates. Foca nos mais recentes e relevantes.`
 
 export async function processWithAI(
   content: string,
-  tool: 'Lovable' | 'Claude/Anthropic'
+  tool: 'Lovable' | 'Claude/Anthropic' | 'Claude Code'
 ): Promise<ProcessedResult> {
   const message = await client.messages.create({
     model: 'claude-opus-4-5',

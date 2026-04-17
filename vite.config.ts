@@ -20,6 +20,11 @@ export default defineConfig({
         target: 'https://docs.anthropic.com',
         changeOrigin: true,
         rewrite: (path) => path.replace('/proxy/anthropic-docs', '')
+      },
+      '/proxy/claudecode': {
+        target: 'https://code.claude.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace('/proxy/claudecode', '')
       }
     }
   }

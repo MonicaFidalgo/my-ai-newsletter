@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react'
 import { usePanel } from './usePanel'
 import { Panel } from './components/Panel'
-import { fetchLovable, fetchClaude, processWithAI } from './api'
+import { fetchLovable, fetchClaude, fetchClaudeCode, processWithAI } from './api'
 import { UI, type Lang } from './i18n'
 
-type Tab = 'lovable' | 'claude'
+type Tab = 'lovable' | 'claude' | 'claudecode'
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('lovable')
@@ -22,19 +22,26 @@ function App() {
     (content: string) => processWithAI(content, 'Claude/Anthropic'),
     []
   )
+  const claudeCodeFetcher = useCallback(() => fetchClaudeCode(), [])
+  const claudeCodeProcessor = useCallback(
+    (content: string) => processWithAI(content, 'Claude Code'),
+    []
+  )
 
   const lovable = usePanel('lovable', language, lovableFetcher, lovableProcessor)
   const claude = usePanel('claude', language, claudeFetcher, claudeProcessor)
+  const claudeCode = usePanel('claudecode', language, claudeCodeFetcher, claudeCodeProcessor)
 
   async function refreshAll() {
-    await Promise.all([lovable.refresh(), claude.refresh()])
+    await Promise.all([lovable.refresh(), claude.refresh(), claudeCode.refresh()])
   }
 
-  const isLoading = lovable.state.loading || claude.state.loading
+  const isLoading = lovable.state.loading || claude.state.loading || claudeCode.state.loading
 
   const tabs = [
-    { id: 'lovable' as Tab, label: 'Lovable', state: lovable.state },
-    { id: 'claude' as Tab, label: 'Claude / Anthropic', state: claude.state },
+    { id: 'lovable' as Tab, label: '💗 Lovable', state: lovable.state },
+    { id: 'claude' as Tab, label: '🤖 Claude / Anthropic', state: claude.state },
+    { id: 'claudecode' as Tab, label: '🖥️ Claude Code', state: claudeCode.state },
   ]
 
   function toggleLanguage(lang: Lang) {
@@ -165,7 +172,7 @@ function App() {
               onLoadSession={lovable.loadSession}
               onClearSessionView={lovable.clearSessionView}
             />
-          ) : (
+          ) : activeTab === 'claude' ? (
             <Panel
               name="Claude / Anthropic"
               state={claude.state}
@@ -175,6 +182,17 @@ function App() {
               viewingSession={claude.viewingSession}
               onLoadSession={claude.loadSession}
               onClearSessionView={claude.clearSessionView}
+            />
+          ) : (
+            <Panel
+              name="Claude Code"
+              state={claudeCode.state}
+              language={language}
+              onRefresh={claudeCode.refresh}
+              sessions={claudeCode.sessions}
+              viewingSession={claudeCode.viewingSession}
+              onLoadSession={claudeCode.loadSession}
+              onClearSessionView={claudeCode.clearSessionView}
             />
           )}
         </div>
